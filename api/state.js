@@ -1,3 +1,6 @@
+const SUPABASE_URL = 'https://njqobyflbawwkypbvhfs.supabase.co'
+const SUPABASE_KEY = 'sb_publishable__QXhe9vqEIr5-lZjUXF75w_q-g-c-SK'
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
@@ -7,25 +10,38 @@ export default async function handler(req, res) {
     return res.status(200).end()
   }
 
-  const url = process.env.UPSTASH_REDIS_REST_URL
-  const token = process.env.UPSTASH_REDIS_REST_TOKEN
+  const headers = {
+    'apikey': SUPABASE_KEY,
+    'Authorization': `Bearer ${SUPABASE_KEY}`,
+    'Content-Type': 'application/json',
+    'Prefer': 'return=representation'
+  }
 
   if (req.method === 'POST') {
     const body = req.body
-    const data = JSON.stringify({ ...body, updated_at: Date.now() })
-    const r = await fetch(`${url}/set/toy:state/${encodeURIComponent(data)}`, {
-      headers: { Authorization: `Bearer ${token}` }
+    const data = { ...body, updated_at: Date.now() }
+    
+    // 先删旧数据，再插入新数据
+    await fetch(`${SUPABASE_URL}/rest/v1/state?id=eq.1`, {
+      method: 'DELETE',
+      headers
+    })
+    
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/state`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ id: 1, data: JSON.stringify(data) })
     })
     const j = await r.json()
-    return res.status(200).json({ ok: true, redis: j })
+    return res.status(200).json({ ok: true, result: j })
   }
 
   if (req.method === 'GET') {
-    const r = await fetch(`${url}/get/toy:state`, {
-      headers: { Authorization: `Bearer ${token}` }
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/state?id=eq.1&select=data`, {
+      headers
     })
-    const json = await r.json()
-    const state = json.result ? JSON.parse(decodeURIComponent(json.result)) : { cmd: 'stop', mode: 0, intensity: 0, updated_at: 0 }
+    const j = await r.json()
+    const state = j[0] ? JSON.parse(j[0].data) : { cmd: 'stop', mode: 0, intensity: 0, updated_at: 0 }
     return res.status(200).json(state)
   }
 }
