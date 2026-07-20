@@ -41,7 +41,14 @@ input[type=range]{width:100%;max-width:300px;}
 const SVC='0000ffe0-0000-1000-8000-00805f9b34fb';
 const WR='0000ffe1-0000-1000-8000-00805f9b34fb';
 const NTF='0000ffe2-0000-1000-8000-00805f9b34fb';
-const API='https://hush-shenzhishu12-3368s-projects.vercel.app/api/state';
+const SUPA='https://njqobyflbawwkypbvhfs.supabase.co/rest/v1/state';
+const KEY='sb_publishable__QXhe9vqEIr5-lZjUXF75w_q-g-c-SK';
+
+const HEADERS={
+  'apikey':KEY,
+  'Authorization':'Bearer '+KEY,
+  'Content-Type':'application/json'
+};
 
 let wc=null,lastAt=0;
 
@@ -84,19 +91,24 @@ async function go(mode){
   log('点击 mode='+mode+' int='+i);
   try{
     if(wc) await send(mode,mode?i:0);
-    await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cmd:mode?'set':'stop',mode:mode,intensity:i})});
+    const data={cmd:mode?'set':'stop',mode:mode,intensity:i,updated_at:Date.now()};
+    await fetch(SUPA+'?id=eq.1',{method:'DELETE',headers:HEADERS});
+    await fetch(SUPA,{method:'POST',headers:{...HEADERS,'Prefer':'return=minimal'},body:JSON.stringify({id:1,data:JSON.stringify(data)})});
   }catch(e){log('go错误: '+e.message);}
 }
 
 async function poll(){
   if(!wc)return;
   try{
-    const r=await fetch(API);
-    const s=await r.json();
-    if(s.updated_at>lastAt){
-      lastAt=s.updated_at;
-      if(s.cmd==='stop')await send(0,0);
-      else if(s.cmd==='set')await send(s.mode,s.intensity);
+    const r=await fetch(SUPA+'?id=eq.1&select=data',{headers:HEADERS});
+    const j=await r.json();
+    if(j[0]){
+      const s=JSON.parse(j[0].data);
+      if(s.updated_at>lastAt){
+        lastAt=s.updated_at;
+        if(s.cmd==='stop')await send(0,0);
+        else if(s.cmd==='set')await send(s.mode,s.intensity);
+      }
     }
   }catch(e){}
   setTimeout(poll,1000);
@@ -104,3 +116,4 @@ async function poll(){
 </script>
 </body>
 </html>
+
