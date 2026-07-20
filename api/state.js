@@ -13,13 +13,8 @@ export default async function handler(req, res) {
   if (req.method === 'POST') {
     const body = req.body
     const data = JSON.stringify({ ...body, updated_at: Date.now() })
-    const r = await fetch(`${url}/set/toy:state`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(data)
+    const r = await fetch(`${url}/set/toy:state/${encodeURIComponent(data)}`, {
+      headers: { Authorization: `Bearer ${token}` }
     })
     const j = await r.json()
     return res.status(200).json({ ok: true, redis: j })
@@ -30,7 +25,8 @@ export default async function handler(req, res) {
       headers: { Authorization: `Bearer ${token}` }
     })
     const json = await r.json()
-    const state = json.result ? JSON.parse(json.result) : { cmd: 'stop', mode: 0, intensity: 0, updated_at: 0 }
+    const state = json.result ? JSON.parse(decodeURIComponent(json.result)) : { cmd: 'stop', mode: 0, intensity: 0, updated_at: 0 }
     return res.status(200).json(state)
   }
 }
+
