@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="background:#111;color:#eee;padding:20px;font-family:Arial;">
+<button onclick="go(1)" style="padding:20px;font-size:18px;width:100%;background:#7744cc;color:white;border:none;border-radius:8px;margin-bottom:10px;">开启</button>
+<button onclick="go(0)" style="padding:20px;font-size:18px;width:100%;background:#333;color:white;border:none;border-radius:8px;">停止</button>
+<div id="log" style="margin-top:16px;font-size:12px;color:#888;"></div>
+<script>
+const API='https://hush-shenzhishu12-3368s-projects.vercel.app/api/state';
+async function go(mode){
+  try{
+    const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cmd:mode?'set':'stop',mode:1,intensity:3})});
+    const d=await r.json();
+    document.getElementById('log').textContent=JSON.stringify(d);
+  }catch(e){document.getElementById('log').textContent='错误: '+e.message;}
+}
+</script>
+</body>
+</html>
