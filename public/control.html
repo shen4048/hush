@@ -50,7 +50,7 @@ function log(m){const e=document.getElementById('log');e.innerHTML+=new Date().t
 async function connect(){
   try{
     const d=await navigator.bluetooth.requestDevice({
-      acceptAllDevices:true,
+      filters:[{namePrefix:'SX'}],
       optionalServices:[SVC]
     });
     const s=await d.gatt.connect();
