@@ -81,8 +81,11 @@ async function send(mode,intensity){
 
 async function go(mode){
   const i=parseInt(document.getElementById('sl').value);
-  await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cmd:mode?'set':'stop',mode:mode,intensity:i})});
-  if(wc)await send(mode,mode?i:0);
+  log('点击 mode='+mode+' int='+i);
+  try{
+    if(wc) await send(mode,mode?i:0);
+    await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cmd:mode?'set':'stop',mode:mode,intensity:i})});
+  }catch(e){log('go错误: '+e.message);}
 }
 
 async function poll(){
