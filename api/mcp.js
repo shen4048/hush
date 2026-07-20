@@ -16,8 +16,7 @@ export default async function handler(req, res) {
 
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  // OAuth metadata
-  if (path === '/.well-known/oauth-authorization-server') {
+  if (path.includes('oauth-authorization-server')) {
     return res.json({
       issuer: `https://${req.headers.host}`,
       authorization_endpoint: `https://${req.headers.host}/api/mcp/authorize`,
@@ -27,8 +26,7 @@ export default async function handler(req, res) {
     });
   }
 
-  // Authorization redirect to GitHub
-  if (path === '/api/mcp/authorize') {
+  if (path.includes('authorize')) {
     const state = url.searchParams.get('state') || '';
     const codeChallenge = url.searchParams.get('code_challenge') || '';
     const ghUrl = `https://github.com/login/oauth/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&state=${encodeURIComponent(state + '|' + codeChallenge)}&scope=read:user`;
@@ -36,8 +34,7 @@ export default async function handler(req, res) {
     return res.status(302).end();
   }
 
-  // OAuth callback from GitHub
-  if (path === '/api/mcp/callback') {
+  if (path.includes('callback')) {
     const code = url.searchParams.get('code');
     const stateParam = url.searchParams.get('state') || '';
     const [originalState] = stateParam.split('|');
@@ -55,8 +52,7 @@ export default async function handler(req, res) {
     return res.status(302).end();
   }
 
-  // Token exchange
-  if (path === '/api/mcp/token') {
+  if (path.includes('token')) {
     const body = req.body;
     return res.json({
       access_token: body.code || 'dummy_token',
@@ -65,8 +61,7 @@ export default async function handler(req, res) {
     });
   }
 
-  // MCP SSE
-  if (req.method === 'GET' && path === '/api/mcp') {
+  if (req.method === 'GET') {
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
@@ -76,8 +71,7 @@ export default async function handler(req, res) {
     return;
   }
 
-  // MCP POST
-  if (req.method === 'POST' && path === '/api/mcp') {
+  if (req.method === 'POST') {
     const body = req.body;
     const id = body.id;
 
@@ -109,3 +103,5 @@ export default async function handler(req, res) {
 
   return res.status(404).json({ error: 'not found' });
 }
+
+    
